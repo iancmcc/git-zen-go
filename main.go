@@ -5,6 +5,7 @@ import (
 	flags "github.com/zenoss/go-flags"
 	"os"
 	"os/exec"
+	"syscall"
 )
 
 type Options struct {
@@ -33,21 +34,43 @@ func verifyDeps() {
 	}
 }
 
-func execCommand(bin string, args ...string) error {
+func execute(pwd string, bin string, args ...string) int {
+	if pwd == "" {
+		pwd, _ = os.Getwd()
+	}
 	cmd := exec.Command(bin, args...)
+	cmd.Dir = pwd
 	if opts.Verbose {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
-	return cmd.Run()
+	err := cmd.Run()
+	if exiterr, ok := err.(*exec.ExitError); ok {
+		// The program has exited with an exit code != 0
+
+		// There is no plattform independent way to retrieve
+		// the exit code, but the following will work on Unix
+		if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+			return status.ExitStatus()
+		}
+	}
+	return 0
 }
 
-func git(args ...string) error {
-	return execCommand(gitbin, args...)
+type Repository struct {
+	path string
 }
 
-func gitflow(args ...string) error {
-	return execCommand(gitflowbin, args...)
+func NewRepository(path string) *Repository {
+	return &Repository{path}
+}
+
+func (r *Repository) git(args ...string) int {
+	return execute(r.path, gitbin, args...)
+}
+
+func (r *Repository) gitflow(args ...string) int {
+	return execute(r.path, gitflowbin, args...)
 }
 
 func main() {
