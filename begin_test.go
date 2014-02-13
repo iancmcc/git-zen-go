@@ -54,9 +54,7 @@ func setup() {
 }
 
 func assertHasBranch(t *testing.T, path, branch string) {
-	cmd := exec.Command("git", "branch", "--list", branch)
-	cmd.Dir = path
-	out, _ := cmd.Output()
+	_, out := NewRepository(path).git("branch", "--list", branch)
 	if len(out) > 0 {
 		return
 	}
@@ -64,9 +62,7 @@ func assertHasBranch(t *testing.T, path, branch string) {
 }
 
 func assertIsOnBranch(t *testing.T, path, branch string) {
-	cmd := exec.Command("git", "status", "-s", "-b")
-	cmd.Dir = path
-	out, _ := cmd.Output()
+	_, out := NewRepository(path).git("status", "-s", "-b")
 	b := strings.Split(string(out[3:]), "\n")[0]
 	if b == branch {
 		return
@@ -75,9 +71,7 @@ func assertIsOnBranch(t *testing.T, path, branch string) {
 }
 
 func assertUncommittedChanges(t *testing.T, path string) {
-	cmd := exec.Command("git", "diff")
-	cmd.Dir = path
-	out, _ := cmd.Output()
+	_, out := NewRepository(path).git("diff")
 	if len(out) > 0 {
 		return
 	}

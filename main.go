@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	flags "github.com/zenoss/go-flags"
+	"io"
 	"os"
 	"os/exec"
 	"syscall"
@@ -34,15 +36,18 @@ func verifyDeps() {
 	}
 }
 
-func execute(pwd string, bin string, args ...string) int {
+func execute(pwd string, bin string, args ...string) (int, string) {
+	b := &bytes.Buffer{}
 	if pwd == "" {
 		pwd, _ = os.Getwd()
 	}
 	cmd := exec.Command(bin, args...)
 	cmd.Dir = pwd
+	cmd.Stdout = b
+	cmd.Stderr = b
 	if opts.Verbose {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
+		cmd.Stdout = io.MultiWriter(cmd.Stdout, os.Stdout)
+		cmd.Stderr = io.MultiWriter(cmd.Stderr, os.Stderr)
 	}
 	err := cmd.Run()
 	if exiterr, ok := err.(*exec.ExitError); ok {
@@ -51,10 +56,10 @@ func execute(pwd string, bin string, args ...string) int {
 		// There is no plattform independent way to retrieve
 		// the exit code, but the following will work on Unix
 		if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
-			return status.ExitStatus()
+			return status.ExitStatus(), b.String()
 		}
 	}
-	return 0
+	return 0, b.String()
 }
 
 type Repository struct {
@@ -65,11 +70,11 @@ func NewRepository(path string) *Repository {
 	return &Repository{path}
 }
 
-func (r *Repository) git(args ...string) int {
+func (r *Repository) git(args ...string) (int, string) {
 	return execute(r.path, gitbin, args...)
 }
 
-func (r *Repository) gitflow(args ...string) int {
+func (r *Repository) gitflow(args ...string) (int, string) {
 	return execute(r.path, gitflowbin, args...)
 }
 

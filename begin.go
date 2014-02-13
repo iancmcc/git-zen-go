@@ -10,7 +10,7 @@ func init() {
 }
 
 func initialize(r *Repository) {
-	if exit := r.gitflow("init", "-d"); exit == 0 {
+	if exit, _ := r.gitflow("init", "-d"); exit == 0 {
 		r.git("push", "origin", "--all")
 	}
 }
@@ -18,7 +18,7 @@ func initialize(r *Repository) {
 func begin(r *Repository, feature string) {
 	r.git("stash")
 	defer r.git("stash", "pop")
-	result := r.gitflow("feature", "start", feature)
+	result, _ := r.gitflow("feature", "start", feature)
 	if result == 1 {
 		// Branch already exists
 		r.git("checkout", "feature/"+feature)

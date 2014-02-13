@@ -1,8 +1,6 @@
 package main
 
-import (
-	"fmt"
-)
+import ()
 
 var (
 	review *ReviewCommand
@@ -13,10 +11,14 @@ func init() {
 	parser.AddCommand("review", "Request a review of a feature", "", review)
 }
 
+func checkChanges(r *Repository) {
+	r.git("diff")
+}
+
 type ReviewCommand struct{}
 
 func (b *ReviewCommand) Execute(args []string) error {
-	fmt.Println("REVIEW")
-	fmt.Println(args)
+	repo := NewRepository("")
+	checkChanges(repo)
 	return nil
 }
