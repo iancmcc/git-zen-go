@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -20,12 +19,12 @@ var (
 func testGitRepo() string {
 	td, _ := ioutil.TempDir("", "gztest")
 	repo := NewRepository(td)
-	repo.git("init")
+	repo.Git("init")
 	cmd := exec.Command("touch", "testfile")
 	cmd.Dir = td
 	cmd.Run()
-	repo.git("add", "testfile")
-	repo.git("commit", "-m", "Commit")
+	repo.Git("add", "testfile")
+	repo.Git("commit", "-m", "Commit")
 	dirs = append(dirs, td)
 	return td
 }
@@ -33,7 +32,7 @@ func testGitRepo() string {
 func cloneGitRepo(origin string) string {
 	td, _ := ioutil.TempDir("", "gztest")
 	repo := NewRepository(td)
-	repo.git("clone", origin, td)
+	repo.Git("clone", origin, td)
 	dirs = append(dirs, td)
 	return td
 }
@@ -54,28 +53,21 @@ func setup() {
 }
 
 func assertHasBranch(t *testing.T, path, branch string) {
-	_, out := NewRepository(path).git("branch", "--list", branch)
-	if len(out) > 0 {
-		return
+	if !NewRepository(path).HasBranch(branch) {
+		t.Fatalf("Repository %s doesn't have branch %s", path, branch)
 	}
-	t.Fatalf("Repository %s doesn't have branch %s", path, branch)
 }
 
-func assertIsOnBranch(t *testing.T, path, branch string) {
-	_, out := NewRepository(path).git("status", "-s", "-b")
-	b := strings.Split(string(out[3:]), "\n")[0]
-	if b == branch {
-		return
+func assertCurrentBranch(t *testing.T, path, branch string) {
+	if NewRepository(path).Branch() != branch {
+		t.Fatalf("Repository %s is not on branch %s", path, branch)
 	}
-	t.Fatalf("Repository %s is not on branch %s", path, branch)
 }
 
 func assertUncommittedChanges(t *testing.T, path string) {
-	_, out := NewRepository(path).git("diff")
-	if len(out) > 0 {
-		return
+	if !NewRepository(path).HasChanges() {
+		t.Fatalf("Repository %s has no uncommitted changes", path)
 	}
-	t.Fatalf("Repository %s has no uncommitted changes", path)
 }
 
 func TestInitialization(t *testing.T) {
@@ -105,7 +97,7 @@ func TestBegin(t *testing.T) {
 
 	assertHasBranch(t, origin, "feature/myfeature")
 	assertHasBranch(t, clone, "feature/myfeature")
-	assertIsOnBranch(t, clone, "feature/myfeature")
+	assertCurrentBranch(t, clone, "feature/myfeature")
 }
 
 func TestBeginWithLocalChanges(t *testing.T) {
@@ -116,8 +108,8 @@ func TestBeginWithLocalChanges(t *testing.T) {
 
 	exec.Command("bash", "-c", fmt.Sprintf("echo 1 >> %s", testfile)).Run()
 
-	repo.git("add", "testfile")
-	repo.git("commit", "-m", "x")
+	repo.Git("add", "testfile")
+	repo.Git("commit", "-m", "x")
 
 	exec.Command("bash", "-c", fmt.Sprintf("echo 1 >> %s", testfile)).Run()
 	data1, _ := ioutil.ReadFile(testfile)
@@ -142,5 +134,5 @@ func TestBranchAlreadyExists(t *testing.T) {
 	begin(repo, "myfeature")
 
 	assertHasBranch(t, clone, "feature/myfeature")
-	assertIsOnBranch(t, clone, "feature/myfeature")
+	assertCurrentBranch(t, clone, "feature/myfeature")
 }

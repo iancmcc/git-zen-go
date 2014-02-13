@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
@@ -70,12 +71,27 @@ func NewRepository(path string) *Repository {
 	return &Repository{path}
 }
 
-func (r *Repository) git(args ...string) (int, string) {
+func (r *Repository) Git(args ...string) (int, string) {
 	return execute(r.path, gitbin, args...)
 }
 
-func (r *Repository) gitflow(args ...string) (int, string) {
+func (r *Repository) Gitflow(args ...string) (int, string) {
 	return execute(r.path, gitflowbin, args...)
+}
+
+func (r *Repository) Branch() string {
+	_, out := r.Git("status", "-s", "-b")
+	return strings.Split(string(out[3:]), "\n")[0]
+}
+
+func (r *Repository) HasBranch(branch string) bool {
+	_, out := r.Git("branch", "--list", branch)
+	return len(out) > 0
+}
+
+func (r *Repository) HasChanges() bool {
+	_, out := r.Git("diff")
+	return len(out) > 0
 }
 
 func main() {

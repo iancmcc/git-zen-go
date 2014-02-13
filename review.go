@@ -1,6 +1,8 @@
 package main
 
-import ()
+import (
+	"fmt"
+)
 
 var (
 	review *ReviewCommand
@@ -12,7 +14,9 @@ func init() {
 }
 
 func checkChanges(r *Repository) {
-	r.git("diff")
+	if r.HasChanges() {
+		fmt.Println("You have uncommitted changes. Commit them.")
+	}
 }
 
 type ReviewCommand struct{}

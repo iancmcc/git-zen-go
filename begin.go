@@ -10,20 +10,20 @@ func init() {
 }
 
 func initialize(r *Repository) {
-	if exit, _ := r.gitflow("init", "-d"); exit == 0 {
-		r.git("push", "origin", "--all")
+	if exit, _ := r.Gitflow("init", "-d"); exit == 0 {
+		r.Git("push", "origin", "--all")
 	}
 }
 
 func begin(r *Repository, feature string) {
-	r.git("stash")
-	defer r.git("stash", "pop")
-	result, _ := r.gitflow("feature", "start", feature)
+	r.Git("stash")
+	defer r.Git("stash", "pop")
+	result, _ := r.Gitflow("feature", "start", feature)
 	if result == 1 {
 		// Branch already exists
-		r.git("checkout", "feature/"+feature)
+		r.Git("checkout", "feature/"+feature)
 	}
-	r.gitflow("feature", "publish", feature)
+	r.Gitflow("feature", "publish", feature)
 }
 
 type BeginCommand struct{}
