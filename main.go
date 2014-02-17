@@ -90,9 +90,14 @@ func (r *Repository) HasBranch(branch string) bool {
 }
 
 func (r *Repository) HasChanges() bool {
-	_, out := r.Git("diff-index", "--quiet", "HEAD", "--")
-	fmt.Println(out)
-	return len(out) > 0
+	rc, _ := r.Git("diff-index", "--quiet", "HEAD", "--")
+	return rc != 0
+}
+
+func getUrl(r *Repository) string {
+	_, out := r.Git("remote", "show", "origin")
+	s := strings.Split(out, "\n")
+	return strings.Split(s[3], " ")[2]
 }
 
 func main() {
