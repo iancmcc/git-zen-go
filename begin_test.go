@@ -100,16 +100,23 @@ func TestBegin(t *testing.T) {
 	assertCurrentBranch(t, clone, "feature/myfeature")
 }
 
+func makeLocalChange(path string) string {
+	testfile := filepath.Join(path, "testfile")
+	exec.Command("bash", "-c", fmt.Sprintf("echo 1 >> %s", testfile)).Run()
+	NewRepository(path).Git("add", "testfile")
+	return testfile
+}
+
+func commitChanges(path string) {
+	NewRepository(path).Git("commit", "-m", "x")
+}
+
 func TestBeginWithLocalChanges(t *testing.T) {
 	setup()
 	defer cleanup()
 
-	testfile := filepath.Join(clone, "testfile")
-
-	exec.Command("bash", "-c", fmt.Sprintf("echo 1 >> %s", testfile)).Run()
-
-	repo.Git("add", "testfile")
-	repo.Git("commit", "-m", "x")
+	testfile := makeLocalChange(clone)
+	commitChanges(clone)
 
 	exec.Command("bash", "-c", fmt.Sprintf("echo 1 >> %s", testfile)).Run()
 	data1, _ := ioutil.ReadFile(testfile)

@@ -90,7 +90,8 @@ func (r *Repository) HasBranch(branch string) bool {
 }
 
 func (r *Repository) HasChanges() bool {
-	_, out := r.Git("diff")
+	_, out := r.Git("diff-index", "--quiet", "HEAD", "--")
+	fmt.Println(out)
 	return len(out) > 0
 }
 
