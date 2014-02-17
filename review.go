@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 )
 
 var (
@@ -13,16 +13,20 @@ func init() {
 	parser.AddCommand("review", "Request a review of a feature", "", review)
 }
 
-func checkChanges(r *Repository) {
+func checkChanges(r *Repository) error {
 	if r.HasChanges() {
-		fmt.Println("You have uncommitted changes. Commit them.")
+		return errors.New("You have uncommitted changes. Commit them.")
 	}
+	return nil
 }
 
 type ReviewCommand struct{}
 
 func (b *ReviewCommand) Execute(args []string) error {
 	repo := NewRepository("")
-	checkChanges(repo)
+	err := checkChanges(repo)
+	if err != nil {
+		return err
+	}
 	return nil
 }
